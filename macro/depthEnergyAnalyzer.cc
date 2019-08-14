@@ -157,10 +157,6 @@ depthEnergyAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
  if (not iEvent.getByToken(depth_ENToken_, depth_handle_)){
     std::cout << ">>>> pfCluster does not exit !!!\n";
   }
-  //const std::vector<edm::ValueMap<float>>& depthEn = *depth_handle_;
-  //reco::PFClusterCollection cls(*pfclusterHcal.product());
-  //std::vector<reco::PFCluster>::const_iterator cl = cls.begin();
-  //const std::vector<reco::PFCluster>& pfClusters = *pfclusterHcal;
   for (unsigned int i = 0; i < pfclusterHcal->size(); ++i){
   
   float value = 1.0;
@@ -168,10 +164,6 @@ depthEnergyAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
   std::cout << "value:    " << value << std::endl;
   }
 
-  //auto testv=depth_handle_.product()->begin();
-  //std::cout << "testv" << testv.values[0] << std::endl;
- //
- // unsigned int nclust =  pfClusters.size();
 
 
 
