@@ -96,31 +96,12 @@ class depthEnergyProducer : public edm::EDProducer {
 
 };
 
-//
-// constants, enums and typedefs
-//
-
-
-//
-// static data member definitions
-//
-
-//
-// constructors and destructor
-//
 depthEnergyProducer::depthEnergyProducer(const edm::ParameterSet& iConfig):
 
 depth_ENToken_(consumes<reco::PFClusterCollection>(iConfig.getParameter<edm::InputTag>("hltdepthLabel")))
 
 {
 
-
-//  src_  = iConfig.getParameter<edm::InputTag>( "src" );
-   //culsterTag = iConfig.getParameter<edm::InputTag>( "culsterTag" );
-  // produces<PointCollection>( "innerPoint" ).setBranchAlias( "innerPoints");
-  // produces<PointCollection>( "outerPoint" ).setBranchAlias( "outerPoints");
-  //clusterToken_ = consumes<View<reco::PFCandidate> >(culsterTag;
-  //produces<std::vector<reco::PFClusterCollection>>( "depthEnergy" ).setBranchAlias( "depthEnergy");
   produces<edm::ValueMap<float> >("");
  
 
@@ -170,13 +151,7 @@ void depthEnergyProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSe
    values.reserve(nclust);
 
    for (unsigned int icl = 0; icl < nclust; ++icl) {
-
-      // Ptr<reco::PFCluster> pcand = pfclusterHcal->ptrAt( icl );//pfClusters.ptrAt( icl );
-      //reco::PFCluster fcand = reco::PFCluster( *pcand );
-//       std::cout << "depth lenth:   " << pfClusters[icl]->depth()  << std::endl;
        double energyPerDepth = 0.0 ;
-       //for (auto & hitRefAndFrac : pcand->recHitFractions()) {
-       //   const auto & hit = *hitRefAndFrac.recHitRef();
      for (auto & hitRefAndFrac : pfClusters[icl].recHitFractions()) {
         const auto & hit = *hitRefAndFrac.recHitRef();
 
@@ -194,10 +169,7 @@ void depthEnergyProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSe
 
 
        }
-       //std::cout << "energy :   "  << energyPerDepth  << std::endl;
-       //depthEnergy->push_back(energyPerDepth)
        values.push_back(energyPerDepth);
-        //fcand.addUserFloat("energyPerDepth",energyPerDepth);
     }
     std::cout << "size of cluster:   " << nclust  << "lenth of values vector"  << values.size() << std::endl;
     auto out = std::make_unique<edm::ValueMap<float>>();
@@ -207,34 +179,6 @@ void depthEnergyProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSe
     iEvent.put(std::move(out),"");
     //iEvent.put(fcand);// depthEnergy, "depthEnergy" );
 
-
-   // retrieve the tracks
-  //  Handle<TrackCollection> tracks;
-  //  iEvent.getByLabel( src_, tracks );
-	// std::cout << "I am in the producer" << std::endl;
-  //  // create the vectors. Use auto_ptr, as these pointers will automatically
-  //  // delete when they go out of scope, a very efficient way to reduce memory leaks.
-  //  auto_ptr<PointCollection> innerPoints( new PointCollection );
-  //  auto_ptr<PointCollection> outerPoints( new PointCollection );
-  //  // and already reserve some space for the new data, to control the size
-  //  // of your executible's memory use
-  //  const int size = tracks->size();
-  //  innerPoints->reserve( size );
-  //  outerPoints->reserve( size );
-  //  // loop over the tracks:
-  //  for( TrackCollection::const_iterator track = tracks->begin();
-  //      track != tracks->end(); ++ track ) {
-  //    // fill the points in the vectors
-  //    innerPoints->push_back( track->innerPosition() );
-  //    outerPoints->push_back( track->outerPosition() );
-	// std::cout << "innerpoint " << track->innerPosition() <<std::endl;
-  //  }
-   // and save the vectors
-   // iEvent.put( innerPoints, "innerPoint" );
-   // iEvent.put( outerPoints, "outerPoint" );
-
-
-///////////////
 
 
 
