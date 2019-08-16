@@ -160,7 +160,7 @@ depthEnergyAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
   for (unsigned int i = 0; i < pfclusterHcal->size(); ++i){
   
   float value = 1.0;
-  value = (*depth_handle_)[pfclusterHcal->refAt(i)];
+  depthEnergy = (*depth_handle_)[pfclusterHcal->refAt(i)];
   std::cout << "value:    " << value << std::endl;
   }
 
