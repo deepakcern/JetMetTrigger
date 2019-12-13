@@ -20,7 +20,7 @@ def configureJetMetNtuple(process):
 
     process.pfRaw     = cms.EDAnalyzer('EfficiencyTreeProducer',
       offlinepfjets   = cms.InputTag('ak4PFJets'),
-      depthEnergyTag  = cms.InputTag('HBHEdepthEnergy'),
+      #depthEnergyTag  = cms.InputTag('HBHEdepthEnergy'),
       hltpfCondidates = cms.InputTag('hltParticleFlow'),
       hltpfjets       = cms.InputTag('hltAK4PFJets'),
       vertices        = cms.InputTag('offlinePrimaryVertices'),#'goodOfflinePrimaryVertices'),
