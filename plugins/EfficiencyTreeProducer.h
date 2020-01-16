@@ -34,8 +34,9 @@ class EfficiencyTreeProducer : public edm::EDAnalyzer
     double etaMin_; 
     float weight_,rho_;
     bool pass_;
-    std::vector<float> *offlinepfPt_,*offlinepfPhi_,*offlinepfEta_,*offlinepfMatchDR_,*hltPt_,*hltEta_,*hltPhi_,*hltMatchDR_;
+    std::vector<float> *offlinepfPt_,*offlinepfPhi_,*offlinepfEta_,*offlinepfMatchDR_,*hltPt_,*hltEta_,*hltPhi_,*hltMatchDR_, *hltCandEta_;
     std::vector<std::vector<float>> *depthEnergyFraction;
+    std::vector<std::vector<float>> *depthEnergyFraction_offline;
     TTree *outTree_;
     
 };

@@ -48,11 +48,13 @@ namespace pat {
   edm::InputTag srcRho_;  
   edm::InputTag srcVtx_; 
   edm::InputTag HBHEdepthEnergy_;
-  edm::InputTag hltpfCondidates_; 
+  edm::InputTag hltpfCondidates_;
+  edm::InputTag pfCondidates_ ; 
   double ptMin_;  
   double weight_;
 
   std::vector<float> DepthFractions_;
+  std::vector<float> offlinefractions_;
 //  edm::InputTag srcMuons_;
    
   edm::EDGetTokenT<reco::PFJetCollection> T_OfflinePFJets_; 
@@ -62,6 +64,7 @@ namespace pat {
   edm::EDGetTokenT<reco::VertexCollection> T_Vtx_;  
   edm::EDGetTokenT<edm::ValueMap<float> > HBHEdepthperEnergy_;
   edm::EDGetTokenT<reco::PFCandidateCollection> hltpfConds_;
+  edm::EDGetTokenT<reco::PFCandidateCollection> pfConds_;
 
 EfficiencyTreeProducer::EfficiencyTreeProducer(edm::ParameterSet const& cfg) 
 {
@@ -69,6 +72,7 @@ EfficiencyTreeProducer::EfficiencyTreeProducer(edm::ParameterSet const& cfg)
   srcHLTPFJets_       = cfg.getParameter<edm::InputTag>             ("hltpfjets");
   HBHEdepthEnergy_    = cfg.getParameter<edm::InputTag>             ("depthEnergyTag");
   hltpfCondidates_    = cfg.getParameter<edm::InputTag>             ("hltpfCondidates");
+  pfCondidates_       = cfg.getParameter<edm::InputTag>             ("pfCondidates");
   srcRho_             = cfg.getParameter<edm::InputTag>             ("rho");
   srcVtx_             = cfg.getParameter<edm::InputTag>             ("vertices");
   ptMin_              = cfg.getParameter<double>                    ("ptMin");
@@ -82,6 +86,7 @@ EfficiencyTreeProducer::EfficiencyTreeProducer(edm::ParameterSet const& cfg)
   Test_HLTPFJets_ = consumes<edm::View<reco::PFJet>> (srcHLTPFJets_);
   HBHEdepthperEnergy_ = consumes<edm::ValueMap<float>> (HBHEdepthEnergy_);
   hltpfConds_         = consumes<reco::PFCandidateCollection>(hltpfCondidates_);
+  pfConds_            = consumes<reco::PFCandidateCollection>(pfCondidates_);
   T_Rho_ = consumes<double> (srcRho_);
   T_Vtx_ = consumes<reco::VertexCollection> (srcVtx_);
   
@@ -104,7 +109,10 @@ void EfficiencyTreeProducer::beginJob()
   hltEta_     = new std::vector<float>;
   hltPhi_     = new std::vector<float>;
   hltMatchDR_ = new std::vector<float>;
+  hltCandEta_ = new std::vector<float>; 
+
   depthEnergyFraction = new std::vector<std::vector<float>>;
+  depthEnergyFraction_offline = new std::vector<std::vector<float>>;
   outTree_->Branch("offlinepfPt"     ,"vector<float>",&offlinepfPt_);
   outTree_->Branch("offlinepfEta"    ,"vector<float>",&offlinepfEta_); 
   outTree_->Branch("offlinepfPhi"    ,"vector<float>",&offlinepfPhi_);
@@ -113,7 +121,9 @@ void EfficiencyTreeProducer::beginJob()
   outTree_->Branch("hltEta"    ,"vector<float>",&hltEta_);
   outTree_->Branch("hltPhi"    ,"vector<float>",&hltPhi_);
   outTree_->Branch("hltMatchDR","vector<float>",&hltMatchDR_);
+  outTree_->Branch("hltCandEta", "vector<float>",&hltCandEta_);
   outTree_->Branch("depthFractions","vector<vector<float>>",&depthEnergyFraction);
+  outTree_->Branch("depthFractions_offline","vector<vector<float>>",&depthEnergyFraction_offline);
 
   cout<<"Begin job finished"<<endl;
 }
@@ -128,7 +138,9 @@ void EfficiencyTreeProducer::endJob()
   delete hltEta_;
   delete hltPhi_;
   delete hltMatchDR_;
+  delete hltCandEta_;
   delete depthEnergyFraction;
+  delete depthEnergyFraction_offline;
 }
 //////////////////////////////////////////////////////////////////////////////////////////
 void EfficiencyTreeProducer::initialize()
@@ -145,7 +157,9 @@ void EfficiencyTreeProducer::initialize()
   hltEta_->clear();
   hltPhi_->clear();
   hltMatchDR_->clear();
+  hltCandEta_->clear();
   depthEnergyFraction->clear();
+  depthEnergyFraction_offline->clear();
 }
 //////////////////////////////////////////////////////////////////////////////////////////
 void EfficiencyTreeProducer::analyze(edm::Event const& iEvent, edm::EventSetup const& iSetup) 
@@ -173,6 +187,23 @@ void EfficiencyTreeProducer::analyze(edm::Event const& iEvent, edm::EventSetup c
   //   return;
   // }
 
+  edm::Handle<reco::PFCandidateCollection> cands_test;
+  iEvent.getByToken(pfConds_, cands_test);
+  for (unsigned int ij = 0, cn = cands_test->size(); ij < cn; ++ij){
+     const reco::PFCandidate &cand_test = (*cands_test)[ij];
+     auto fraction = cand_test.hcalDepthEnergyFractions();
+     if (fabs(cand_test.eta()) < 1.3) continue;
+     if (cand_test.pt() < 1) continue;
+     //std::cout << "offl condidates pdgId  "  << fabs(cand_test.pdgId()) << std::endl;
+     offlinefractions_.clear();
+     for (unsigned int i=0; i < fraction.size(); i++){
+        offlinefractions_.push_back(fraction[i]);
+        //std::cout << "offl frac"  << fraction[i] << std::endl;
+   }
+  depthEnergyFraction_offline->push_back(offlinefractions_);
+  }
+
+
   edm::Handle<reco::PFCandidateCollection> cands;
   iEvent.getByToken(hltpfConds_, cands);
   for (unsigned int ic = 0, nc = cands->size(); ic < nc; ++ic) {
@@ -182,12 +213,14 @@ void EfficiencyTreeProducer::analyze(edm::Event const& iEvent, edm::EventSetup c
     //std::cout << "cand eta"  << cand.eta() << endl;  
     //std::cout << "condidates pdgId  "  << fabs(cand.pdgId() << std::endl;
     if (fabs(cand.eta()) < 1.3 ) continue;
-    if (cand.pt() < 1) continue; 
+    if (cand.pt() < 1) continue;
+    //std::cout << "onl condidates pdgId  "  << fabs(cand.pdgId()) << std::endl;
+    hltCandEta_->push_back(cand.eta()); 
     //std::cout << "condidates pdgId  "  << fabs(cand.pdgId()) << "condidate pt " << cand.pt() << std::endl;
     DepthFractions_.clear(); 
     for (unsigned int i=0; i < DepthFractions.size(); i++){
         DepthFractions_.push_back(DepthFractions[i]);
-        //std::cout << "depth energy "  << DepthFractions[i] << std::endl;
+        //std::cout << "onl frac "  << DepthFractions[i] << std::endl;
          }
     depthEnergyFraction->push_back(DepthFractions_);       
         
@@ -212,7 +245,10 @@ void EfficiencyTreeProducer::analyze(edm::Event const& iEvent, edm::EventSetup c
       if (ijet->pt() > ptMin_ && (ijet->eta()) >= etaMin_ && (ijet->eta()) < etaMax_) {
         hltPt_ ->push_back(ijet->pt());
         hltEta_->push_back(ijet->eta()); 
-        hltPhi_->push_back(ijet->phi());  
+        hltPhi_->push_back(ijet->phi()); 
+
+        //std::cout << "jet fraction"  << ijet->hcalDepthEnergyFractions() << std::endl;
+ 
         pass_ = true;
         // ---- loop over the genjets and find the closest match -----
         float dRmin(1000);
