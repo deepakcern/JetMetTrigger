@@ -55,6 +55,8 @@ namespace pat {
 
   std::vector<float> DepthFractions_;
   std::vector<float> offlinefractions_;
+  std::vector<float> onljetfrac_tmp;
+  std::vector<float> offljetfrac_tmp;
 //  edm::InputTag srcMuons_;
    
   edm::EDGetTokenT<reco::PFJetCollection> T_OfflinePFJets_; 
@@ -113,6 +115,10 @@ void EfficiencyTreeProducer::beginJob()
 
   depthEnergyFraction = new std::vector<std::vector<float>>;
   depthEnergyFraction_offline = new std::vector<std::vector<float>>;
+
+  OfflJet_DepthFractions  = new std::vector<std::vector<float>>;
+  OnlJet_DepthFractions   = new std::vector<std::vector<float>>;
+
   outTree_->Branch("offlinepfPt"     ,"vector<float>",&offlinepfPt_);
   outTree_->Branch("offlinepfEta"    ,"vector<float>",&offlinepfEta_); 
   outTree_->Branch("offlinepfPhi"    ,"vector<float>",&offlinepfPhi_);
@@ -124,6 +130,8 @@ void EfficiencyTreeProducer::beginJob()
   outTree_->Branch("hltCandEta", "vector<float>",&hltCandEta_);
   outTree_->Branch("depthFractions","vector<vector<float>>",&depthEnergyFraction);
   outTree_->Branch("depthFractions_offline","vector<vector<float>>",&depthEnergyFraction_offline);
+  outTree_->Branch("OfflJet_DepthFractions","vector<vector<float>>",&OfflJet_DepthFractions);
+  outTree_->Branch("OnlJet_DepthFractions","vector<vector<float>>",&OnlJet_DepthFractions);
 
   cout<<"Begin job finished"<<endl;
 }
@@ -141,6 +149,10 @@ void EfficiencyTreeProducer::endJob()
   delete hltCandEta_;
   delete depthEnergyFraction;
   delete depthEnergyFraction_offline;
+  delete OfflJet_DepthFractions;
+  delete OnlJet_DepthFractions;
+
+
 }
 //////////////////////////////////////////////////////////////////////////////////////////
 void EfficiencyTreeProducer::initialize()
@@ -160,6 +172,11 @@ void EfficiencyTreeProducer::initialize()
   hltCandEta_->clear();
   depthEnergyFraction->clear();
   depthEnergyFraction_offline->clear();
+
+  OfflJet_DepthFractions->clear();
+  OnlJet_DepthFractions->clear();
+
+
 }
 //////////////////////////////////////////////////////////////////////////////////////////
 void EfficiencyTreeProducer::analyze(edm::Event const& iEvent, edm::EventSetup const& iSetup) 
@@ -229,19 +246,59 @@ void EfficiencyTreeProducer::analyze(edm::Event const& iEvent, edm::EventSetup c
   }
 
   //std::cout << "Entered inside analyser step2 "  << std::endl;
-  edm::Handle<edm::View<reco::PFJet>>  hltpfjets;
+  edm::Handle<edm::View<reco::PFJet>>  hltpfjets_;
   //std::cout << "Entered inside analyser step3 "  << std::endl;
-  iEvent.getByToken(Test_HLTPFJets_,hltpfjets);
-  //std::cout << "Entered inside analyser"  << std::endl;
-  //std::cout << "size of hltpfjets " << hltpfjets->size() << std::endl;
-  //for (unsigned int i = 0; i < hltpfjets->size(); ++i){
-  //    float value = 1.0;
-  //    value = (*depth_handle_)[hltpfjets->refAt(i)];
-  //    std::cout << "value:  "  << value << std::endl;
-  // }
+  iEvent.getByToken(Test_HLTPFJets_,hltpfjets_);
 
-    iEvent.getByLabel(srcHLTPFJets_,pfjets);
-    for(reco::PFJetCollection::const_iterator ijet = pfjets->begin();ijet != pfjets->end(); ++ijet) {  
+  iEvent.getByLabel(srcHLTPFJets_,pfjets);
+
+
+    for(reco::PFJetCollection::const_iterator ijet = pfjets->begin();ijet != pfjets->end(); ++ijet) { 
+      //std::vector<edm::Ptr<reco::Candidate>> constituentPtrs = ijet->getJetConstituents(); 
+      std::vector< reco::PFCandidatePtr > iparticles = ijet->getPFConstituents();
+
+      if (fabs(ijet->eta()) < 1.3 ) continue;
+
+      float hcalEnergy = 0.0;
+      float hcalEnergy_ = 0.0;
+      float hcalEnergyDepth01 = 0.0;
+      float hcalEnergyDepth02 = 0.0;
+      float hcalEnergyDepth03 = 0.0;
+      float hcalEnergyDepth04 = 0.0;
+      float hcalEnergyDepth05 = 0.0;
+      float hcalEnergyDepth06 = 0.0;
+      float hcalEnergyDepth07 = 0.0;
+
+
+      for ( std::vector<reco::PFCandidatePtr>::const_iterator partBegin = iparticles.begin(), 
+           partEnd = iparticles.end(), ipart = partBegin; ipart != partEnd; ++ipart ) {
+           hcalEnergy_ = ipart->get()->hcalEnergy();
+           auto jet_DepthFractions = ipart->get()->hcalDepthEnergyFractions();
+           //std::cout << "DepthFractions" << jet_DepthFractions[0]  << std::endl;
+
+          hcalEnergyDepth01 +=  hcalEnergy_ * jet_DepthFractions[0];
+          hcalEnergyDepth02 +=  hcalEnergy_ * jet_DepthFractions[1];
+          hcalEnergyDepth03 +=  hcalEnergy_ * jet_DepthFractions[2];
+          hcalEnergyDepth04 +=  hcalEnergy_ * jet_DepthFractions[3];
+          hcalEnergyDepth05 +=  hcalEnergy_ * jet_DepthFractions[4];
+          hcalEnergyDepth06 +=  hcalEnergy_ * jet_DepthFractions[5];
+          hcalEnergyDepth07 +=  hcalEnergy_ * jet_DepthFractions[6];
+          hcalEnergy += hcalEnergy_;
+
+     }
+      onljetfrac_tmp.clear();
+      onljetfrac_tmp.push_back(hcalEnergyDepth01/hcalEnergy);
+      onljetfrac_tmp.push_back(hcalEnergyDepth02/hcalEnergy);
+      onljetfrac_tmp.push_back(hcalEnergyDepth03/hcalEnergy);
+      onljetfrac_tmp.push_back(hcalEnergyDepth04/hcalEnergy);
+      onljetfrac_tmp.push_back(hcalEnergyDepth05/hcalEnergy);
+      onljetfrac_tmp.push_back(hcalEnergyDepth06/hcalEnergy);
+      onljetfrac_tmp.push_back(hcalEnergyDepth07/hcalEnergy);
+      
+      OnlJet_DepthFractions->push_back(onljetfrac_tmp);
+
+      //std::cout << "online jet eta " << ijet->eta() << "    depth1:  "  << hcalEnergyDepth01 << "  depth2:  "  << hcalEnergyDepth02 << "   depth3:   "  << hcalEnergyDepth03 << " depth4:   "  << hcalEnergyDepth04 << "  depth5:  "  << hcalEnergyDepth05  << "   depth6:   "  << hcalEnergyDepth06  << "  depth7:   "  << hcalEnergyDepth07 << std::endl;
+
       if (ijet->pt() > ptMin_ && (ijet->eta()) >= etaMin_ && (ijet->eta()) < etaMax_) {
         hltPt_ ->push_back(ijet->pt());
         hltEta_->push_back(ijet->eta()); 
@@ -253,6 +310,18 @@ void EfficiencyTreeProducer::analyze(edm::Event const& iEvent, edm::EventSetup c
         // ---- loop over the genjets and find the closest match -----
         float dRmin(1000);
         for(reco::PFJetCollection::const_iterator ipf = offlinepfjets->begin();ipf != offlinepfjets->end(); ++ipf) { 
+
+          //std::vector< reco::PFCandidatePtr > offiparticles = ipf->getPFConstituents();
+
+
+        //for ( std::vector<reco::PFCandidatePtr>::const_iterator offpartBegin = offiparticles.begin(),          
+          //  offpartEnd = offiparticles.end(), offipart = offpartBegin; offipart != offpartEnd; ++offipart ) {
+            //auto offjet_DepthFractions = offipart->get()->hcalDepthEnergyFractions();
+              //   if (0) {
+                //        std::cout << "off DepthFractions"  << offjet_DepthFractions[0]  << std::endl;
+                  //      }
+          //}
+
           float dR = deltaR(ipf->eta(),ipf->phi(),ijet->eta(),ijet->phi());
           if (dR < dRmin) {
             dRmin = dR;
@@ -266,7 +335,50 @@ void EfficiencyTreeProducer::analyze(edm::Event const& iEvent, edm::EventSetup c
 
 
   // ---- loop over the offlinepfjets and check the matching radius with any of the firing jets ------
-   for(reco::PFJetCollection::const_iterator ipf = offlinepfjets->begin();ipf != offlinepfjets->end(); ++ipf) {  
+   for(reco::PFJetCollection::const_iterator ipf = offlinepfjets->begin();ipf != offlinepfjets->end(); ++ipf) { 
+    std::vector< reco::PFCandidatePtr > offiparticles = ipf->getPFConstituents();
+
+    if (fabs(ipf->eta()) < 1.3 ) continue;
+
+    float offhcalEnergy = 0.0;
+    float offhcalEnergy_ = 0.0;
+    float offhcalEnergyDepth01 = 0.0;
+    float offhcalEnergyDepth02 = 0.0;
+    float offhcalEnergyDepth03 = 0.0;
+    float offhcalEnergyDepth04 = 0.0;
+    float offhcalEnergyDepth05 = 0.0;
+    float offhcalEnergyDepth06 = 0.0;
+    float offhcalEnergyDepth07 = 0.0;
+
+    for ( std::vector<reco::PFCandidatePtr>::const_iterator offpartBegin = offiparticles.begin(),
+            offpartEnd = offiparticles.end(), offipart = offpartBegin; offipart != offpartEnd; ++offipart ) {
+
+            offhcalEnergy_ = offipart->get()->hcalEnergy();
+            auto offjet_DepthFractions = offipart->get()->hcalDepthEnergyFractions();
+            //std::cout << "off DepthFractions"  << offjet_DepthFractions[0]  << std::endl;
+
+            offhcalEnergyDepth01 +=  offhcalEnergy_ * offjet_DepthFractions[0];
+            offhcalEnergyDepth02 +=  offhcalEnergy_ * offjet_DepthFractions[1];
+            offhcalEnergyDepth03 +=  offhcalEnergy_ * offjet_DepthFractions[2];
+            offhcalEnergyDepth04 +=  offhcalEnergy_ * offjet_DepthFractions[3];
+            offhcalEnergyDepth05 +=  offhcalEnergy_ * offjet_DepthFractions[4];
+            offhcalEnergyDepth06 +=  offhcalEnergy_ * offjet_DepthFractions[5];
+            offhcalEnergyDepth07 +=  offhcalEnergy_ * offjet_DepthFractions[6];
+
+            offhcalEnergy += offhcalEnergy_;
+
+          }
+         offljetfrac_tmp.clear();
+         offljetfrac_tmp.push_back(offhcalEnergyDepth01/offhcalEnergy);
+         offljetfrac_tmp.push_back(offhcalEnergyDepth02/offhcalEnergy);
+         offljetfrac_tmp.push_back(offhcalEnergyDepth03/offhcalEnergy);
+         offljetfrac_tmp.push_back(offhcalEnergyDepth04/offhcalEnergy);
+         offljetfrac_tmp.push_back(offhcalEnergyDepth05/offhcalEnergy);
+         offljetfrac_tmp.push_back(offhcalEnergyDepth06/offhcalEnergy);
+         offljetfrac_tmp.push_back(offhcalEnergyDepth07/offhcalEnergy);
+
+    OfflJet_DepthFractions->push_back(offljetfrac_tmp);
+ 
     if (ipf->pt() > 20 && (ipf->eta()) >= etaMin_ && (ipf->eta()) < etaMax_) {
       offlinepfPt_ ->push_back(ipf->pt());
       offlinepfEta_->push_back(ipf->eta()); 

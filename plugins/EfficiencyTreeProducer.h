@@ -37,6 +37,8 @@ class EfficiencyTreeProducer : public edm::EDAnalyzer
     std::vector<float> *offlinepfPt_,*offlinepfPhi_,*offlinepfEta_,*offlinepfMatchDR_,*hltPt_,*hltEta_,*hltPhi_,*hltMatchDR_, *hltCandEta_;
     std::vector<std::vector<float>> *depthEnergyFraction;
     std::vector<std::vector<float>> *depthEnergyFraction_offline;
+    std::vector<std::vector<float>> *OnlJet_DepthFractions;
+    std::vector<std::vector<float>> *OfflJet_DepthFractions;
     TTree *outTree_;
     
 };
