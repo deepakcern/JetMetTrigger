@@ -14,7 +14,7 @@
 #include "DataFormats/MuonReco/interface/MuonSelectors.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 
-class EfficiencyTreeProducer : public edm::EDAnalyzer 
+class EfficiencyTreeProducer : public edm::EDAnalyzer
 {
   public:
     explicit EfficiencyTreeProducer(edm::ParameterSet const& cfg);
@@ -23,24 +23,23 @@ class EfficiencyTreeProducer : public edm::EDAnalyzer
     virtual void endJob();
     virtual ~EfficiencyTreeProducer();
 
-  private:  
+  private:
     void initialize();
-    //---- configurable parameters --------   
+    //---- configurable parameters --------
     edm::InputTag srcHLTJets_,srcOfflinePFJets_,srcVtx_,srcRho_;
     edm::Service<TFileService> fs_;
     int run_,nvtx_;
     double ptMin_;
-    double etaMax_; 
-    double etaMin_; 
+    double etaMax_;
+    double etaMin_;
     float weight_,rho_;
     bool pass_;
     std::vector<float> *offlinepfPt_,*offlinepfPhi_,*offlinepfEta_,*offlinepfMatchDR_,*hltPt_,*hltEta_,*hltPhi_,*hltMatchDR_, *hltCandEta_;
-    std::vector<std::vector<float>> *depthEnergyFraction;
-    std::vector<std::vector<float>> *depthEnergyFraction_offline;
-    std::vector<std::vector<float>> *OnlJet_DepthFractions;
-    std::vector<std::vector<float>> *OfflJet_DepthFractions;
+    std::vector<std::vector<float>> *DepthFractions;
+    std::vector<std::vector<float>> *hltDepthFractions;
     TTree *outTree_;
-    
+
+    std::vector<float> *JetPt_,*JetEta_,*JetPhi_,*OfflinehltJetMatchDR_,*offlineGenJetMatchDR_,*hltofflineJetMatchDR_,*hltGenJetMatchDR_,*hltJetPt_,*hltJetEta_,*hltJetPhi_;
 };
 
 #endif
